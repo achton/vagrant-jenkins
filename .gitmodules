@@ -21,4 +21,4 @@
 	url = git://github.com/wulff/puppet-php.git
 [submodule "puppet/modules/jenkins"]
 	path = puppet/modules/jenkins
-	url = git://github.com/wulff/puppet-jenkins.git
+	url = git://github.com/achton/puppet-jenkins.git
