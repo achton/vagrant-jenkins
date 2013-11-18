@@ -21,7 +21,7 @@ Getting started
 
 When the virtual machine has booted, you can access the Jenkins instance at the following URL:
 
-    http://33.33.33.10/
+    http://33.33.33.100/
 
 No authentication methods are enabled by default, so you won't be asked for a username and password (this is to make local testing and development as easy as possible). If you choose to deploy this setup, you should enable some form of user authentication (Go to *Manage Jenkins* and follow the *Setup Security* wizard).
 
@@ -37,7 +37,7 @@ On the configuration page, you should modify a few settings:
 
 * **Discard Old Builds** Unless you have unlimited disk space, you should tell Jenkins to discard data from old builds. Keeping build data for a couple of weeks is a good starting point.
 * **Disable Build** Uncheck this to make sure your job can be run as soon as you are done configuring it.
-* **Restrict where this project can be run** We need to make sure that this job runs on a slave which is equipped to run it. In this case, tell Jenkins to always run this job on `phpqa.peytz.dk`.
+* **Restrict where this project can be run** We need to make sure that this job runs on a slave which is equipped to run it. In this case, tell Jenkins to always run this job on `phpqa.local`.
 
 The static analysis job needs some code to analyze, so we will select *Git* in the *Source Code Management* section and enter the repository URL and branch of the code we wish to analyze.
 
@@ -57,7 +57,7 @@ On the configuration page, you should modify a few settings:
 
 * **Discard Old Builds** Unless you have unlimited disk space, you should tell Jenkins to discard data from old builds. Keeping build data for a couple of weeks is a good starting point.
 * **Disable Build** Uncheck this to make sure your job can be run as soon as you are done configuring it.
-* **Restrict where this project can be run** We need to make sure that this job runs on a slave which is equipped to run it. In this case, tell Jenkins to always run this job on `selenium.peytz.dk`.
+* **Restrict where this project can be run** We need to make sure that this job runs on a slave which is equipped to run it. In this case, tell Jenkins to always run this job on `selenium.local`.
 
 The Selenium job needs some test cases to run, so we will select *Git* in the *Source Code Management* section and enter the repository URL and branch of a repository containing some Selenium tests.
 

@@ -10,13 +10,14 @@ Vagrant::configure('2') do |config|
     puppet.manifests_path = 'puppet/manifests'
     puppet.manifest_file = 'site.pp'
     puppet.module_path = 'puppet/modules'
+    puppet.options = ['--verbose']
   end
 
   # setup master node
   config.vm.define :master, {:primary => true} do |master|
     # configure network
     master.vm.hostname = 'master.local'
-    master.vm.network :private_network, ip: '33.33.33.10'
+    master.vm.network :private_network, ip: '33.33.33.100'
 
     config.vm.provider 'virtualbox' do |v|
       v.name = 'Vagrant Jenkins - Master'
@@ -28,7 +29,7 @@ Vagrant::configure('2') do |config|
   config.vm.define :phpqa do |phpqa|
     # configure network
     phpqa.vm.hostname = 'phpqa.local'
-    phpqa.vm.network :private_network, ip: '33.33.33.11'
+    phpqa.vm.network :private_network, ip: '33.33.33.111'
 
     config.vm.provider 'virtualbox' do |v|
       v.name = 'Vagrant Jenkins - PHP QA'
@@ -37,22 +38,22 @@ Vagrant::configure('2') do |config|
   end
 
   # setup drupal simpletest node
-  # config.vm.define :drupal do |drupal|
-  #   # configure network
-  #   drupal.vm.hostname = 'drupal.local'
-  #   drupal.vm.network :private_network, ip: '33.33.33.12'
-  #
-  #   config.vm.provider 'virtualbox' do |v|
-  #     v.name = 'Vagrant Jenkins - Drupal Simpletest'
-  #     v.customize ['modifyvm', :id, '--memory', 512]
-  #   end
-  # end
+  config.vm.define :simpletest do |simpletest|
+    # configure network
+    simpletest.vm.hostname = 'simpletest.local'
+    simpletest.vm.network :private_network, ip: '33.33.33.112'
+
+      config.vm.provider 'virtualbox' do |v|
+      v.name = 'Vagrant Jenkins - Drupal Simpletest'
+      v.customize ['modifyvm', :id, '--memory', 512]
+    end
+  end
 
   # setup selenium node
   config.vm.define :selenium do |selenium|
     # configure network
     selenium.vm.hostname = 'selenium.local'
-    selenium.vm.network :private_network, ip: '33.33.33.13'
+    selenium.vm.network :private_network, ip: '33.33.33.113'
 
     config.vm.provider 'virtualbox' do |v|
       v.name = 'Vagrant Jenkins - Selenium'

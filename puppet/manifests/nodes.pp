@@ -49,8 +49,31 @@ node "jenkins-master" inherits "basenode" {
   jenkins::plugin { 'email-ext': }
   jenkins::plugin { 'envinject': }
   jenkins::plugin { 'favorite': }
-  jenkins::plugin { 'git': }
-  jenkins::plugin { 'git-client': }
+  # Must also define dependencies to install a plugin. Dependencies can be found on plugin page on wiki.jenkinsci.org
+  jenkins::plugin {
+    'git':
+      version => "2.0";
+  }
+  jenkins::plugin {
+    "git-client" :
+      version => "1.4.5";
+  }
+  jenkins::plugin {
+    "ssh-credentials" :
+      version => "1.5.1";
+  }
+  jenkins::plugin {
+    "ssh-agent" :
+      version => "1.3";
+  }
+  jenkins::plugin {
+    "credentials" :
+      version => "1.8.3";
+  }
+  jenkins::plugin {
+    "scm-api" :
+      version => "0.1";
+  }
   jenkins::plugin { 'jenkinswalldisplay': }
   jenkins::plugin { 'jobConfigHistory': }
   jenkins::plugin { 'log-parser': }
@@ -67,13 +90,14 @@ node "jenkins-master" inherits "basenode" {
   jenkins::plugin { 'warnings': }
   jenkins::plugin { 'xvfb': }
 
+
   class { 'jenkins::config':
     slaves => [
       {
-        name => 'phpqa.peytz.dk',
+        name => 'phpqa.local',
         description => 'A slave optimized for doing static code analysis of PHP projects.',
         labels => 'phpqa',
-        host => '33.33.33.11',
+        host => '33.33.33.111',
         port => '22',
         path => '/home/jenkins/ci',
         username => 'jenkins',
@@ -81,10 +105,10 @@ node "jenkins-master" inherits "basenode" {
         executors => 2,
       },
       {
-        name => 'drupal.peytz.dk',
+        name => 'simpletest.local',
         description => 'A slave optimized for running Drupal simpletests.',
         labels => 'drupal',
-        host => '33.33.33.12',
+        host => '33.33.33.112',
         port => '22',
         path => '/home/jenkins/ci',
         username => 'jenkins',
@@ -92,10 +116,10 @@ node "jenkins-master" inherits "basenode" {
         executors => 2,
       },
       {
-        name => 'selenium.peytz.dk',
+        name => 'selenium.local',
         description => 'A slave optimized for running Selenium-based tests.',
         labels => 'selenium',
-        host => '33.33.33.13',
+        host => '33.33.33.113',
         port => '22',
         path => '/home/jenkins/ci',
         username => 'jenkins',
@@ -172,7 +196,7 @@ node "jenkins-slave" inherits "basenode" {
   }
 
   file { '/home/jenkins/.gitconfig':
-    content => "[user]\n  email = jenkins@peytz.dk\n  name = Peytz Jenkins",
+    content => "[user]\n  email = jenkins@git.example.dk\n  name = Jenkins Git",
     owner => 'jenkins',
     group => 'jenkins',
     require => User['jenkins'],
@@ -206,7 +230,7 @@ node "master.local" inherits "jenkins-master" {
 
   apache::mod { 'rewrite': }
 
-  apache::vhost::proxy { 'master.33.33.33.10.xip.io':
+  apache::vhost::proxy { 'master.33.33.33.100.xip.io':
     port => '80',
     dest => 'http://localhost:8080',
   }
@@ -305,7 +329,7 @@ node "phpqa.local" inherits "jenkins-slave" {
 
 }
 
-node "drupal.local" inherits "jenkins-slave" {
+node "simpletest.local" inherits "jenkins-slave" {
 
   class { 'jenkins::requirements':
     stage => 'requirements',
