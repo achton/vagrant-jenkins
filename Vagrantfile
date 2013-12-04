@@ -1,16 +1,16 @@
 Vagrant::configure('2') do |config|
   # the base box this environment is built off of
-  config.vm.box = 'precise32'
+  config.vm.box = 'centos-64-x64-vbox4210'
 
   # the url from where to fetch the base box if it doesn't exist
-  config.vm.box_url = 'http://files.vagrantup.com/precise32.box'
+  config.vm.box_url = 'http://puppet-vagrant-boxes.puppetlabs.com/centos-64-x64-vbox4210.box'
 
   # use puppet to provision packages
   config.vm.provision :puppet do |puppet|
     puppet.manifests_path = 'puppet/manifests'
     puppet.manifest_file = 'site.pp'
     puppet.module_path = 'puppet/modules'
-    puppet.options = ['--verbose']
+    puppet.options = '--verbose --debug'
   end
 
   # setup master node
