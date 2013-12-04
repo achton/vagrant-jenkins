@@ -241,7 +241,7 @@ node "master.local" inherits "jenkins-master" {
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
   }
   jenkins::job { 'template-drupal-static-analysis':
-    repository => 'git://github.com/wulff/jenkins-template-drupal-static-analysis.git',
+    repository => 'git://github.com/troelsselch/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
   }
   jenkins::job { 'template-selenium':
@@ -298,18 +298,17 @@ node "phpqa.local" inherits "jenkins-slave" {
     require => Exec['npm-install-csslint'],
   }
 
-  # download and install phing phploc integration
-  # TODO: test whether the phploc task included with phing works as intended
-
-  file { '/opt/phploctask':
-    ensure => directory,
+  # Backup phpqatools version of PHPLocTask.php and get one that works.
+  exec { 'backup-phploctask':
+    command => 'mv PHPLocTask.php PHPLocTask.php.bak',
+    cwd     => '/usr/share/php/phing/tasks/ext/phploc',
+    require => Package['phpqatools'],
   }
 
   exec { 'download-phploctask':
-    command => 'wget https://raw.github.com/raphaelstolt/phploc-phing/master/PHPLocTask.php',
-    cwd     => '/opt/phploctask',
-    creates => '/opt/phploctask/PHPLocTask.php',
-    require => File['/opt/phploctask'],
+    command => 'wget https://raw.github.com/phingofficial/phing/master/classes/phing/tasks/ext/phploc/PHPLocTask.php',
+    cwd     => '/usr/share/php/phing/tasks/ext/phploc',
+    require => Exec['backup-phploctask'],
   }
 
   # download drupal codesniffer rules
