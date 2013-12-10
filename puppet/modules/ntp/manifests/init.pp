@@ -3,7 +3,12 @@ class ntp {
     ensure => present,
   }
 
-  service { 'ntp':
+  $ntp_service = operatingsystem ? {
+     ubuntu => "ntp",
+     centos => "ntpd",
+  }
+
+  service { $ntp_service:
     ensure => running,
     require => Package['ntp'],
   }
