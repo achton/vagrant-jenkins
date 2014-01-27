@@ -1,97 +1,151 @@
 # nodes.pp
 
 node "basenode" {
-  class { 'jenkins::bootstrap':
+
+  if $operatingsystem == 'centos' {
+    # disable iptables to allow incomming trafic TODO IMPORTANT: remove before setting if for real as this is a security risk
+    service { 'iptables':
+      ensure => 'stopped',
+    }
+  }
+
+  class { 'jenkinsci::bootstrap':
     stage => 'bootstrap',
   }
 
-  class { 'apt':
-    stage => 'requirements',
+  if $operatingsystem == 'ubuntu' {
+    class { 'apt':
+      stage => 'requirements',
+    }
   }
+
   class { 'git':
     stage => 'requirements',
   }
+
+  # Time Synchronization across servers.
   class { 'ntp':
     stage => 'requirements',
   }
 
-  package { 'htop':
-    ensure => present,
+  # nteractive processes viewer
+  # TODO: check that jenkins is using it.
+  case $operatingsystem {
+    ubuntu: {
+      package { 'htop':
+        ensure => present,
+      }
+    }
+    centos: {
+      exec { 'rpm-download-rpmforge':
+        command => "wget pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm",
+        creates => "/tmp/rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm", # prevents it from being downloaded if it already exists.
+        cwd     => '/tmp',
+      }
+      exec { 'rpm-add-rpmforge':
+        command => "rpm -Uhv rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm",
+        cwd     => '/tmp',
+        require => Exec['rpm-download-rpmforge'],
+        unless  => "rpm -qa | grep rpmforge" # Do not install if already installed.
+      }
+      package { 'htop':
+        ensure => present,
+        require => Exec['rpm-add-rpmforge'],
+      }
+    }
+    default: { fail("Unrecognized operating system for webserver for htop") }
   }
 
-  package { 'ncdu':
-    ensure => present,
+  # ncurses disk usage viewer
+  case $operatingsystem {
+    ubuntu: {
+      package { 'ncdu':
+        ensure => present,
+      }
+    }
+    centos: {
+      # TODO find ncdu installation method for centos
+    }
+    default: { fail("Unrecognized operating system for webserver for ncdu") }
   }
 }
 
 node "jenkins-master" inherits "basenode" {
+  # TODO Test on ubuntu
+  package {"openjdk-6-jre":
+    ensure => installed,
+    name => $operatingsystem ? {
+     ubuntu => "openjdk-6-jre",
+     centos => "java-1.6.0-openjdk",
+    }
+  }
 
-  class { 'jenkins::requirements':
+  class { 'jenkinsci::requirements':
     stage => 'requirements',
   }
 
   # install jenkins and all required plugins
 
-  class { 'jenkins': }
+  class { 'jenkinsci': }
 
-  jenkins::plugin { 'analysis-collector': }
-  jenkins::plugin { 'analysis-core': }
-  jenkins::plugin { 'ansicolor': }
-  jenkins::plugin { 'build-timeout': }
-  jenkins::plugin { 'checkstyle': }
-  jenkins::plugin { 'claim': }
-  jenkins::plugin { 'compact-columns': }
-  jenkins::plugin { 'console-column-plugin': }
-  jenkins::plugin { 'dashboard-view': }
-  jenkins::plugin { 'disk-usage': }
-  jenkins::plugin { 'dry': }
-  jenkins::plugin { 'dynamicparameter': }
-  jenkins::plugin { 'email-ext': }
-  jenkins::plugin { 'envinject': }
-  jenkins::plugin { 'favorite': }
+  jenkinsci::plugin { 'analysis-collector': }
+  jenkinsci::plugin { 'analysis-core': }
+  jenkinsci::plugin { 'ansicolor': }
+  jenkinsci::plugin { 'build-timeout': }
+  jenkinsci::plugin { 'checkstyle': }
+  jenkinsci::plugin { 'claim': }
+  jenkinsci::plugin { 'compact-columns': }
+  jenkinsci::plugin { 'console-column-plugin': }
+  jenkinsci::plugin { 'dashboard-view': }
+  jenkinsci::plugin { 'disk-usage': }
+  jenkinsci::plugin { 'dry': }
+  jenkinsci::plugin { 'dynamicparameter': }
+  jenkinsci::plugin { 'email-ext': }
+  jenkinsci::plugin { 'envinject': }
+  jenkinsci::plugin { 'favorite': }
   # Must also define dependencies to install a plugin. Dependencies can be found on plugin page on wiki.jenkinsci.org
-  jenkins::plugin {
+  jenkinsci::plugin {
     'git':
       version => "2.0";
   }
-  jenkins::plugin {
+  jenkinsci::plugin {
     "git-client" :
       version => "1.4.5";
   }
-  jenkins::plugin {
+  jenkinsci::plugin {
     "ssh-credentials" :
       version => "1.5.1";
   }
-  jenkins::plugin {
+  jenkinsci::plugin {
     "ssh-agent" :
       version => "1.3";
   }
-  jenkins::plugin {
+  jenkinsci::plugin {
     "credentials" :
       version => "1.8.3";
   }
-  jenkins::plugin {
+  jenkinsci::plugin {
     "scm-api" :
       version => "0.1";
   }
-  jenkins::plugin { 'jenkinswalldisplay': }
-  jenkins::plugin { 'jobConfigHistory': }
-  jenkins::plugin { 'log-parser': }
-  jenkins::plugin { 'multiple-scms': }
-  jenkins::plugin { 'performance': }
-  jenkins::plugin { 'phing': }
-  jenkins::plugin { 'plot': }
-  jenkins::plugin { 'pmd': }
-  jenkins::plugin { 'project-stats-plugin': }
-#  jenkins::plugin { 'selenium': } # TODO: use this when it becomes stable
-  jenkins::plugin { 'tasks': }
-  jenkins::plugin { 'token-macro': }
-  jenkins::plugin { 'view-job-filters': }
-  jenkins::plugin { 'warnings': }
-  jenkins::plugin { 'xvfb': }
+  jenkinsci::plugin { 'jenkinswalldisplay': }
+  jenkinsci::plugin { 'jobConfigHistory': }
+  jenkinsci::plugin { 'log-parser': }
+  jenkinsci::plugin { 'multiple-scms': }
+  jenkinsci::plugin { 'performance': }
+  jenkinsci::plugin { 'phing': }
+  jenkinsci::plugin { 'plot': }
+  jenkinsci::plugin { 'pmd': }
+  jenkinsci::plugin { 'project-stats-plugin': }
+#  jenkinsci::plugin { 'selenium': } # TODO: use this when it becomes stable
+  jenkinsci::plugin { 'tasks': }
+  jenkinsci::plugin { 'token-macro': }
+  jenkinsci::plugin { 'view-job-filters': }
+  jenkinsci::plugin { 'warnings': }
+  jenkinsci::plugin { 'xvfb': }
 
 
-  class { 'jenkins::config':
+  class { 'jenkinsci::config':
     slaves => [
       {
         name => 'phpqa.local',
@@ -131,14 +185,21 @@ node "jenkins-master" inherits "basenode" {
   }
 
   # this is necessary to render graphs
-  package { 'ttf-dejavu':
-    ensure => present,
+  package { 'dejavu-sans-fonts':
+    ensure => installed,
+    name => $operatingsystem ? {
+     ubuntu => "ttf-dejavu",
+     centos => "dejavu-sans-fonts",
+    }
   }
 
   file { '/var/lib/jenkins/.ssh':
     ensure => directory,
     owner => jenkins,
-    group => nogroup,
+    group => $operatingsystem ? {
+      centos  => 'nobody',
+      ubuntu  => 'nogroup',
+    },
     mode => 0700,
     require => Package['jenkins'],
   }
@@ -146,7 +207,10 @@ node "jenkins-master" inherits "basenode" {
   file { '/var/lib/jenkins/.ssh/id_rsa':
     content => $ssh_private_key,
     owner => jenkins,
-    group => nogroup,
+    group => $operatingsystem ? {
+      centos  => 'nobody',
+      ubuntu  => 'nogroup',
+    },
     mode => 0600,
     require => File['/var/lib/jenkins/.ssh'],
   }
@@ -154,7 +218,10 @@ node "jenkins-master" inherits "basenode" {
   file { '/var/lib/jenkins/.ssh/id_rsa.pub':
     content => $ssh_public_key,
     owner => jenkins,
-    group => nogroup,
+    group => $operatingsystem ? {
+      centos  => 'nobody',
+      ubuntu  => 'nogroup',
+    },
     mode => 0644,
     require => File['/var/lib/jenkins/.ssh'],
   }
@@ -162,7 +229,10 @@ node "jenkins-master" inherits "basenode" {
   file { '/var/lib/jenkins/.ssh/config':
     content => "UserKnownHostsFile=/dev/null\nStrictHostKeyChecking=no",
     owner => jenkins,
-    group => nogroup,
+    group => $operatingsystem ? {
+      centos  => 'nobody',
+      ubuntu  => 'nogroup',
+    },
     mode => 0644,
     require => File['/var/lib/jenkins/.ssh'],
   }
@@ -170,9 +240,12 @@ node "jenkins-master" inherits "basenode" {
 }
 
 node "jenkins-slave" inherits "basenode" {
-
-  package { 'openjdk-6-jre':
-    ensure => present,
+  package {"openjdk-6-jre":
+    ensure => installed,
+    name => $operatingsystem ? {
+     ubuntu => "openjdk-6-jre",
+     centos => "java-1.6.0-openjdk",
+    }
   }
 
   user { 'jenkins':
@@ -182,7 +255,7 @@ node "jenkins-slave" inherits "basenode" {
     ensure => present,
   }
 
-  ssh_authorized_key { 'jenkins':
+  ssh_authorized_key { 'jenkinsci':
     user => 'jenkins',
     type => 'ssh-rsa',
     key => $ssh_public_key,
@@ -196,7 +269,7 @@ node "jenkins-slave" inherits "basenode" {
   }
 
   file { '/home/jenkins/.gitconfig':
-    content => "[user]\n  email = jenkins@git.example.dk\n  name = Jenkins Git",
+    content => "[user]\n  email = jenkinsci@git.example.dk\n  name = Jenkinsci Git",
     owner => 'jenkins',
     group => 'jenkins',
     require => User['jenkins'],
@@ -207,9 +280,13 @@ node "jenkins-slave" inherits "basenode" {
 node "master.local" inherits "jenkins-master" {
 
   # this is necessary to make it possible to configure jobs using xvfb
-
-  package { 'xvfb':
-    ensure => present,
+  # TODO Test with new vagrant up on centos and ubuntu.
+  package {"xvfb":
+    ensure => installed,
+    name => $operatingsystem ? {
+     ubuntu => "xvfb",
+     centos => "xorg-x11-server-Xvfb",
+    }
   }
 
   # install postfix to make it possible for jenkins to notify via mail
@@ -226,9 +303,12 @@ node "master.local" inherits "jenkins-master" {
   # use apache as a proxy for jenkins
 
   class { 'apache': }
-  class { 'apache::mod::proxy': }
 
-  apache::mod { 'rewrite': }
+  # proxy and rewrite is are enabled by default on centos
+  if $operatingsystem == 'ubuntu' {
+    class { 'apache::mod::proxy': }
+    apache::mod { 'rewrite': }
+  }
 
   apache::vhost::proxy { 'master.33.33.33.100.xip.io':
     port => '80',
@@ -237,16 +317,19 @@ node "master.local" inherits "jenkins-master" {
 
   # install various job templates
 
-  jenkins::job { 'template-drupal-simpletest':
+  jenkinsci::job { 'template-drupal-simpletest':
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
+    require => Package['jenkins'],
   }
-  jenkins::job { 'template-drupal-static-analysis':
+  jenkinsci::job { 'template-drupal-static-analysis':
     repository => 'git://github.com/troelsselch/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
+    require => Package['jenkins'],
   }
-  jenkins::job { 'template-selenium':
+  jenkinsci::job { 'template-selenium':
     repository => 'git://github.com/wulff/jenkins-template-selenium.git',
     branch => 'develop',
+    require => Package['jenkins'],
   }
 }
 
@@ -256,18 +339,66 @@ node "phpqa.local" inherits "jenkins-slave" {
     ensure => present,
   }
 
-  package { 'npm':
-    ensure => present,
-  }
-
   class { 'php': }
 
-  package { 'php-apc': }
-  php::module { 'curl': }
-  php::module { 'gd': }
-  php::module { 'imagick': }
-  php::module { 'sqlite': }
-  php::module { 'xdebug': }
+  package { 'php-apc':
+    ensure => installed,
+    name => $operatingsystem ? {
+     ubuntu => "php-apc",
+     centos => "php-pecl-apc",
+    }
+  }
+
+  php::module { 'gd': } # same for ubuntu and centos
+
+  case $operatingsystem {
+    ubuntu: {
+      php::module { 'xdebug': }
+      php::module { 'curl': }
+      php::module { 'imagick': }
+      php::module { 'sqlite': }
+      # ubuntu way:
+      package { 'npm':
+        ensure => present,
+      }
+      # TODO FIXME find a way to install npm or jshint+csslint on centos
+    }
+    centos: {
+      # curl is already on centos
+
+      exec { 'install-php-xdebug':
+        command => 'pecl install xdebug', # TODO Consider finding/making class/module for pecl
+        unless => 'pecl list | grep xdebug',
+      }
+
+      # Imagick
+      # package { 'ImageMagick': } # declared in php module, qatools
+      package { 'ImageMagick-devel': }
+      exec { 'install-php-imagick':
+        command => 'pecl install imagick',
+        unless => 'pecl list | grep imagick',
+      }
+
+      # sqlite support through pdo
+      exec { 'install-php-pdo':
+        command => 'pecl install pdo',
+        unless => 'pecl list | grep pdo',
+      }
+
+      # used to install jshint and css hint
+      class { 'nodejs':
+        manage_repo  => true
+      }
+
+      package { 'jshint':
+        provider => 'npm',
+        require => Class['nodejs']
+      }
+
+      # centos doensn't come with php-xml support - used to write cpd report
+      package { 'php-xml': }
+    }
+  }
 
   # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
   class { 'php::pear': } -> class { 'php::qatools': }
@@ -299,15 +430,19 @@ node "phpqa.local" inherits "jenkins-slave" {
   }
 
   # Backup phpqatools version of PHPLocTask.php and get one that works.
+  $phploctask_location = $operatingsystem ? {
+    ubuntu => '/usr/share/php/phing/tasks/ext/phploc',
+    centos => '/usr/share/pear/phing/tasks/ext/phploc'
+  }
   exec { 'backup-phploctask':
     command => 'mv PHPLocTask.php PHPLocTask.php.bak',
-    cwd     => '/usr/share/php/phing/tasks/ext/phploc',
+    cwd     => $phploctask_location,
     require => Package['phpqatools'],
   }
 
   exec { 'download-phploctask':
     command => 'wget https://raw.github.com/phingofficial/phing/master/classes/phing/tasks/ext/phploc/PHPLocTask.php',
-    cwd     => '/usr/share/php/phing/tasks/ext/phploc',
+    cwd     => $phploctask_location,
     require => Exec['backup-phploctask'],
   }
 
@@ -318,9 +453,14 @@ node "phpqa.local" inherits "jenkins-slave" {
     creates => '/opt/coder/coder_sniffer/Drupal/ruleset.xml',
   }
 
+  $drupal_standards_symlink = $operatingsystem ? {
+    ubuntu => '/usr/share/php/PHP/CodeSniffer/Standards/Drupal',
+    centos => '/usr/share/pear/PHP/CodeSniffer/Standards/Drupal'
+  }
+
   # TODO: add a git pull to make sure the ruleset is up to date
 
-  file { '/usr/share/php/PHP/CodeSniffer/Standards/Drupal':
+  file { $drupal_standards_symlink:
     ensure => link,
     target => '/opt/coder/coder_sniffer/Drupal',
     require => [Exec['install-drupal-coder'], Class['php::qatools']],
@@ -330,7 +470,7 @@ node "phpqa.local" inherits "jenkins-slave" {
 
 node "simpletest.local" inherits "jenkins-slave" {
 
-  class { 'jenkins::requirements':
+  class { 'jenkinsci::requirements':
     stage => 'requirements',
   }
 
