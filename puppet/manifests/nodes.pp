@@ -1,22 +1,13 @@
 # nodes.pp
 
 node "basenode" {
-
-  if $operatingsystem == 'centos' {
-    # disable iptables to allow incomming trafic TODO IMPORTANT: remove before setting if for real as this is a security risk
-    service { 'iptables':
-      ensure => 'stopped',
-    }
+  # disable iptables to allow incomming trafic TODO IMPORTANT: remove before setting if for real as this is a security risk
+  service { 'iptables':
+    ensure => 'stopped',
   }
 
   class { 'jenkinsci::bootstrap':
     stage => 'bootstrap',
-  }
-
-  if $operatingsystem == 'ubuntu' {
-    class { 'apt':
-      stage => 'requirements',
-    }
   }
 
   class { 'git':
@@ -30,54 +21,29 @@ node "basenode" {
 
   # nteractive processes viewer
   # TODO: check that jenkins is using it.
-  case $operatingsystem {
-    ubuntu: {
-      package { 'htop':
-        ensure => present,
-      }
-    }
-    centos: {
-      exec { 'rpm-download-rpmforge':
-        command => "wget pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm",
-        creates => "/tmp/rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm", # prevents it from being downloaded if it already exists.
-        cwd     => '/tmp',
-      }
-      exec { 'rpm-add-rpmforge':
-        command => "rpm -Uhv rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm",
-        cwd     => '/tmp',
-        require => Exec['rpm-download-rpmforge'],
-        unless  => "rpm -qa | grep rpmforge" # Do not install if already installed.
-      }
-      package { 'htop':
-        ensure => present,
-        require => Exec['rpm-add-rpmforge'],
-      }
-    }
-    default: { fail("Unrecognized operating system for webserver for htop") }
+  exec { 'rpm-download-rpmforge':
+    command => "wget pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm",
+    creates => "/tmp/rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm", # prevents it from being downloaded if it already exists.
+    cwd     => '/tmp',
+  }
+  exec { 'rpm-add-rpmforge':
+    command => "rpm -Uhv rpmforge-release-0.5.2-2.el5.rf.${architecture}.rpm",
+    cwd     => '/tmp',
+    require => Exec['rpm-download-rpmforge'],
+    unless  => "rpm -qa | grep rpmforge" # Do not install if already installed.
+  }
+  package { 'htop':
+    ensure => present,
+    require => Exec['rpm-add-rpmforge'],
   }
 
   # ncurses disk usage viewer
-  case $operatingsystem {
-    ubuntu: {
-      package { 'ncdu':
-        ensure => present,
-      }
-    }
-    centos: {
-      # TODO find ncdu installation method for centos
-    }
-    default: { fail("Unrecognized operating system for webserver for ncdu") }
-  }
+  # TODO find ncdu installation method for centos
 }
 
 node "jenkins-master" inherits "basenode" {
-  # TODO Test on ubuntu
-  package {"openjdk-6-jre":
+  package {"java-1.6.0-openjdk":
     ensure => installed,
-    name => $operatingsystem ? {
-     ubuntu => "openjdk-6-jre",
-     centos => "java-1.6.0-openjdk",
-    }
   }
 
   class { 'jenkinsci::requirements':
@@ -187,19 +153,12 @@ node "jenkins-master" inherits "basenode" {
   # this is necessary to render graphs
   package { 'dejavu-sans-fonts':
     ensure => installed,
-    name => $operatingsystem ? {
-     ubuntu => "ttf-dejavu",
-     centos => "dejavu-sans-fonts",
-    }
   }
 
   file { '/var/lib/jenkins/.ssh':
     ensure => directory,
     owner => jenkins,
-    group => $operatingsystem ? {
-      centos  => 'nobody',
-      ubuntu  => 'nogroup',
-    },
+    group => nobody,
     mode => 0700,
     require => Package['jenkins'],
   }
@@ -207,10 +166,7 @@ node "jenkins-master" inherits "basenode" {
   file { '/var/lib/jenkins/.ssh/id_rsa':
     content => $ssh_private_key,
     owner => jenkins,
-    group => $operatingsystem ? {
-      centos  => 'nobody',
-      ubuntu  => 'nogroup',
-    },
+    group => nobody,
     mode => 0600,
     require => File['/var/lib/jenkins/.ssh'],
   }
@@ -218,10 +174,7 @@ node "jenkins-master" inherits "basenode" {
   file { '/var/lib/jenkins/.ssh/id_rsa.pub':
     content => $ssh_public_key,
     owner => jenkins,
-    group => $operatingsystem ? {
-      centos  => 'nobody',
-      ubuntu  => 'nogroup',
-    },
+    group => nobody,
     mode => 0644,
     require => File['/var/lib/jenkins/.ssh'],
   }
@@ -229,10 +182,7 @@ node "jenkins-master" inherits "basenode" {
   file { '/var/lib/jenkins/.ssh/config':
     content => "UserKnownHostsFile=/dev/null\nStrictHostKeyChecking=no",
     owner => jenkins,
-    group => $operatingsystem ? {
-      centos  => 'nobody',
-      ubuntu  => 'nogroup',
-    },
+    group => nobody,
     mode => 0644,
     require => File['/var/lib/jenkins/.ssh'],
   }
@@ -240,12 +190,8 @@ node "jenkins-master" inherits "basenode" {
 }
 
 node "jenkins-slave" inherits "basenode" {
-  package {"openjdk-6-jre":
+  package {"java-1.6.0-openjdk":
     ensure => installed,
-    name => $operatingsystem ? {
-     ubuntu => "openjdk-6-jre",
-     centos => "java-1.6.0-openjdk",
-    }
   }
 
   user { 'jenkins':
@@ -277,16 +223,12 @@ node "jenkins-slave" inherits "basenode" {
 
 }
 
+# TODO: Update master.local to match your machine name.
 node "master.local" inherits "jenkins-master" {
 
   # this is necessary to make it possible to configure jobs using xvfb
-  # TODO Test with new vagrant up on centos and ubuntu.
-  package {"xvfb":
+  package {"xorg-x11-server-Xvfb":
     ensure => installed,
-    name => $operatingsystem ? {
-     ubuntu => "xvfb",
-     centos => "xorg-x11-server-Xvfb",
-    }
   }
 
   # install postfix to make it possible for jenkins to notify via mail
@@ -305,15 +247,10 @@ node "master.local" inherits "jenkins-master" {
   class { 'apache': }
 
   # proxy and rewrite is are enabled by default on centos
-  if $operatingsystem == 'ubuntu' {
-    class { 'apache::mod::proxy': }
-    apache::mod { 'rewrite': }
-  }
-
-  apache::vhost::proxy { 'master.33.33.33.100.xip.io':
-    port => '80',
-    dest => 'http://localhost:8080',
-  }
+  #apache::vhost::proxy { 'master.33.33.33.100.xip.io':
+  #  port => '80',
+  #  dest => 'http://localhost:8080',
+  #}
 
   # install various job templates
 
@@ -341,64 +278,45 @@ node "phpqa.local" inherits "jenkins-slave" {
 
   class { 'php': }
 
-  package { 'php-apc':
+  package { 'php-pecl-apc':
     ensure => installed,
-    name => $operatingsystem ? {
-     ubuntu => "php-apc",
-     centos => "php-pecl-apc",
-    }
   }
 
   php::module { 'gd': } # same for ubuntu and centos
 
-  case $operatingsystem {
-    ubuntu: {
-      php::module { 'xdebug': }
-      php::module { 'curl': }
-      php::module { 'imagick': }
-      php::module { 'sqlite': }
-      # ubuntu way:
-      package { 'npm':
-        ensure => present,
-      }
-      # TODO FIXME find a way to install npm or jshint+csslint on centos
-    }
-    centos: {
-      # curl is already on centos
+  # curl is already on centos
 
-      exec { 'install-php-xdebug':
-        command => 'pecl install xdebug', # TODO Consider finding/making class/module for pecl
-        unless => 'pecl list | grep xdebug',
-      }
-
-      # Imagick
-      # package { 'ImageMagick': } # declared in php module, qatools
-      package { 'ImageMagick-devel': }
-      exec { 'install-php-imagick':
-        command => 'pecl install imagick',
-        unless => 'pecl list | grep imagick',
-      }
-
-      # sqlite support through pdo
-      exec { 'install-php-pdo':
-        command => 'pecl install pdo',
-        unless => 'pecl list | grep pdo',
-      }
-
-      # used to install jshint and css hint
-      class { 'nodejs':
-        manage_repo  => true
-      }
-
-      package { 'jshint':
-        provider => 'npm',
-        require => Class['nodejs']
-      }
-
-      # centos doensn't come with php-xml support - used to write cpd report
-      package { 'php-xml': }
-    }
+  exec { 'install-php-xdebug':
+    command => 'pecl install xdebug', # TODO Consider finding/making class/module for pecl
+    unless => 'pecl list | grep xdebug',
   }
+
+  # Imagick
+  # package { 'ImageMagick': } # declared in php module, qatools
+  package { 'ImageMagick-devel': }
+  exec { 'install-php-imagick':
+    command => 'pecl install imagick',
+    unless => 'pecl list | grep imagick',
+  }
+
+  # sqlite support through pdo
+  exec { 'install-php-pdo':
+    command => 'pecl install pdo',
+    unless => 'pecl list | grep pdo',
+  }
+
+  # used to install jshint and css hint
+  class { 'nodejs':
+    manage_repo  => true
+  }
+
+  package { 'jshint':
+    provider => 'npm',
+    require => Class['nodejs']
+  }
+
+  # centos doensn't come with php-xml support - used to write cpd report
+  package { 'php-xml': }
 
   # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
   class { 'php::pear': } -> class { 'php::qatools': }
@@ -430,19 +348,15 @@ node "phpqa.local" inherits "jenkins-slave" {
   }
 
   # Backup phpqatools version of PHPLocTask.php and get one that works.
-  $phploctask_location = $operatingsystem ? {
-    ubuntu => '/usr/share/php/phing/tasks/ext/phploc',
-    centos => '/usr/share/pear/phing/tasks/ext/phploc'
-  }
   exec { 'backup-phploctask':
     command => 'mv PHPLocTask.php PHPLocTask.php.bak',
-    cwd     => $phploctask_location,
+    cwd     => '/usr/share/pear/phing/tasks/ext/phploc',
     require => Package['phpqatools'],
   }
 
   exec { 'download-phploctask':
     command => 'wget https://raw.github.com/phingofficial/phing/master/classes/phing/tasks/ext/phploc/PHPLocTask.php',
-    cwd     => $phploctask_location,
+    cwd     => '/usr/share/pear/phing/tasks/ext/phploc',
     require => Exec['backup-phploctask'],
   }
 
@@ -453,14 +367,9 @@ node "phpqa.local" inherits "jenkins-slave" {
     creates => '/opt/coder/coder_sniffer/Drupal/ruleset.xml',
   }
 
-  $drupal_standards_symlink = $operatingsystem ? {
-    ubuntu => '/usr/share/php/PHP/CodeSniffer/Standards/Drupal',
-    centos => '/usr/share/pear/PHP/CodeSniffer/Standards/Drupal'
-  }
-
   # TODO: add a git pull to make sure the ruleset is up to date
 
-  file { $drupal_standards_symlink:
+  file { '/usr/share/pear/PHP/CodeSniffer/Standards/Drupal':
     ensure => link,
     target => '/opt/coder/coder_sniffer/Drupal',
     require => [Exec['install-drupal-coder'], Class['php::qatools']],
@@ -524,27 +433,27 @@ node "simpletest.local" inherits "jenkins-slave" {
 
 }
 
-node "selenium.local" inherits "jenkins-slave" {
-  class { 'selenium': }
+# node "selenium.local" inherits "jenkins-slave" {
+#   class { 'selenium': }
 
-  package { 'firefox':
-    ensure  => present,
-    require => Package['xvfb'],
-  }
+#   package { 'firefox':
+#     ensure  => present,
+#     require => Package['xvfb'],
+#   }
 
 #  package { 'chromium-browser':
 #     ensure  => present,
 #     require => Package['xvfb'],
 #  }
 
-  class { 'php': }
-  php::module { 'curl': }
-  class { 'php::pear': } -> php::pear::package { 'phpunit':
-    repository => 'pear.phpunit.de',
-  }
+#   class { 'php': }
+#   php::module { 'curl': }
+#   class { 'php::pear': } -> php::pear::package { 'phpunit':
+#     repository => 'pear.phpunit.de',
+#   }
 
-  exec { 'install-php-webdriver':
-    command => 'git clone https://github.com/facebook/php-webdriver.git /opt/php-webdriver',
-    creates => '/opt/php-webdriver/lib/WebDriver.php',
-  }
-}
+#   exec { 'install-php-webdriver':
+#     command => 'git clone https://github.com/facebook/php-webdriver.git /opt/php-webdriver',
+#     creates => '/opt/php-webdriver/lib/WebDriver.php',
+#   }
+# }

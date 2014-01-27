@@ -3,7 +3,7 @@ class ntp {
     ensure => present,
   }
 
-  $ntp_service = operatingsystem ? {
+  $ntp_service = $operatingsystem ? {
      ubuntu => "ntp",
      centos => "ntpd",
   }
