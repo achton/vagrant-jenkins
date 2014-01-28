@@ -315,7 +315,7 @@ node "phpqa.local" inherits "jenkins-slave" {
     require => Class['nodejs']
   }
 
-  # centos doensn't come with php-xml support - used to write cpd report
+  # centos doesn't come with php-xml support - used to write cpd report
   package { 'php-xml': }
 
   # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57

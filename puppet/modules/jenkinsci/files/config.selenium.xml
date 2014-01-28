@@ -1,5 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<hudson.plugins.seleniumhq.SeleniumhqBuilder_-DescriptorImpl>
-  <helpRedirect/>
-  <seleniumRunner>/usr/local/lib/selenium/selenium-server.jar</seleniumRunner>
-</hudson.plugins.seleniumhq.SeleniumhqBuilder_-DescriptorImpl>
