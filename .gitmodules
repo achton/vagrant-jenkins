@@ -22,3 +22,6 @@
 [submodule "puppet/modules/jenkinsci"]
 	path = puppet/modules/jenkinsci
 	url = git@github.com:achton/puppet-jenkins.git
+[submodule "puppet/modules/nodejs"]
+	path = puppet/modules/nodejs
+	url = git@github.com:puppetlabs/puppetlabs-nodejs.git
