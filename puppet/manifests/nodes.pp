@@ -274,12 +274,6 @@ node "master.local" inherits "jenkins-master" {
 
   class { 'apache': }
 
-  # proxy and rewrite is are enabled by default on centos
-  #apache::vhost::proxy { 'master.33.33.33.100.xip.io':
-  #  port => '80',
-  #  dest => 'http://localhost:8080',
-  #}
-
   # install various job templates
 
   jenkinsci::job { 'template-drupal-simpletest':
