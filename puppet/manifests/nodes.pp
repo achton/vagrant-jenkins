@@ -226,6 +226,29 @@ node "jenkins-slave" inherits "basenode" {
     require => User['jenkins'],
   }
 
+  file { 'known_hosts':
+    content => $ssh_known_hosts,
+    owner => 'jenkins',
+    group => 'jenkins',
+    require = User['jenkins'],
+  }
+
+  file { '/home/jenkins/.ssh/id_rsa':
+    content => $ssh_private_key,
+    owner => jenkins,
+    group => nobody,
+    mode => 0600,
+    require => File['/home/jenkins/.ssh'],
+  }
+
+  file { '/home/jenkins/.ssh/id_rsa.pub':
+    content => $ssh_public_key,
+    owner => jenkins,
+    group => nobody,
+    mode => 0644,
+    require => File['/home/jenkins/.ssh'],
+  }
+
 }
 
 # TODO: Update master.local to match your machine name.
