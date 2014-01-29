@@ -3,6 +3,11 @@ Vagrant Jenkins
 
 This Vagrantfile and the included puppet manifests can be used to setup a Jenkins server for doing automated testing of Drupal and other PHP-based projects.
 
+SECURITY WARNING!
+----------------
+
+This setup uses CentOS os with iptables (i.e. firewall) disabled!
+
 
 Installation
 ------------
