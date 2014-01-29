@@ -1,6 +1,11 @@
 # nodes.pp
 
 node "basenode" {
+  # Update system packages
+  exec { 'update-all-packages':
+    command => '/usr/bin/yum update --skip-broken -y'
+  }
+
   # disable iptables to allow incomming trafic TODO IMPORTANT: remove before setting if for real as this is a security risk
   service { 'iptables':
     ensure => 'stopped',
@@ -256,17 +261,23 @@ node "master.local" inherits "jenkins-master" {
 
   jenkinsci::job { 'template-drupal-simpletest':
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
-    require => Package['jenkins'],
+    # TODO make sure /var/lib/jenkins/jobs existing. These two does not ensure that.
+    # require => Package['jenkins'],
+    # require => Service['jenkins'],
   }
   jenkinsci::job { 'template-drupal-static-analysis':
     repository => 'git://github.com/troelsselch/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
-    require => Package['jenkins'],
+    # TODO make sure /var/lib/jenkins/jobs existing. These two does not ensure that.
+    # require => Package['jenkins'],
+    # require => Service['jenkins'],
   }
   jenkinsci::job { 'template-selenium':
     repository => 'git://github.com/wulff/jenkins-template-selenium.git',
     branch => 'develop',
-    require => Package['jenkins'],
+    # TODO make sure /var/lib/jenkins/jobs existing. These two does not ensure that.
+    # require => Package['jenkins'],
+    # require => Service['jenkins'],
   }
 }
 
@@ -305,46 +316,44 @@ node "phpqa.local" inherits "jenkins-slave" {
     unless => 'pecl list | grep pdo',
   }
 
+  # centos doesn't come with php-xml support - used to write cpd report
+  package { 'php-xml': }
+
+  # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
+  # TODO: TSS: Takes very long. 10 * 5-10 minutes.
+  class { 'php::pear': } -> class { 'php::qatools': }
+
+
   # used to install jshint and css hint
   class { 'nodejs':
     manage_repo  => true
   }
 
+  # Disable ssl check, since nodejs version is old.
+  exec { 'no-strict-ssl':
+    command => 'npm config set strict-ssl false'
+  }
+
   package { 'jshint':
     provider => 'npm',
-    require => Class['nodejs']
+    require => [
+      Class['nodejs'],
+      Exec['no-strict-ssl']
+    ]
   }
 
-  # centos doesn't come with php-xml support - used to write cpd report
-  package { 'php-xml': }
-
-  # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
-  class { 'php::pear': } -> class { 'php::qatools': }
-
-  # install jshint
-
-  exec { 'npm-install-jshint':
-    command => 'npm install -g jshint',
-    creates => '/usr/local/bin/jshint',
-    require => Package['npm'],
+  package { 'csslint':
+    provider => 'npm',
+    require => [
+      Class['nodejs'],
+      Exec['no-strict-ssl']
+    ]
   }
 
-  exec { 'npm-update-jshint':
-    command => 'npm update -g jshint',
-    require => Exec['npm-install-jshint'],
-  }
-
-  # install csslint
-
-  exec { 'npm-install-csslint':
-    command => 'npm install -g csslint',
-    creates => '/usr/local/bin/csslint',
-    require => Package['npm'],
-  }
-
-  exec { 'npm-update-csslint':
-    command => 'npm update -g csslint',
-    require => Exec['npm-install-csslint'],
+  # Add symlink. Nodejs is installed as "$ nodejs", but csslint and jshint uses "$ node"
+  file { '/usr/bin/node':
+    ensure => 'link',
+    target => '/usr/bin/nodejs',
   }
 
   # Backup phpqatools version of PHPLocTask.php and get one that works.
