@@ -226,11 +226,11 @@ node "jenkins-slave" inherits "basenode" {
     require => User['jenkins'],
   }
 
-  file { 'known_hosts':
+  file { '/home/jenkins/.ssh/known_hosts':
     content => $ssh_known_hosts,
     owner => 'jenkins',
     group => 'jenkins',
-    require = User['jenkins'],
+    require => User['jenkins'],
   }
 
   file { '/home/jenkins/.ssh/id_rsa':
@@ -276,25 +276,23 @@ node "master.local" inherits "jenkins-master" {
 
   # install various job templates
 
+  file { '/var/lib/jenkins/jobs':
+    ensure => directory,
+  }
+
   jenkinsci::job { 'template-drupal-simpletest':
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
-    # TODO make sure /var/lib/jenkins/jobs existing. These two does not ensure that.
-    # require => Package['jenkins'],
-    # require => Service['jenkins'],
+    require => File['/var/lib/jenkins/jobs'],
   }
   jenkinsci::job { 'template-drupal-static-analysis':
     repository => 'git://github.com/troelsselch/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
-    # TODO make sure /var/lib/jenkins/jobs existing. These two does not ensure that.
-    # require => Package['jenkins'],
-    # require => Service['jenkins'],
+    require => File['/var/lib/jenkins/jobs'],
   }
   jenkinsci::job { 'template-selenium':
     repository => 'git://github.com/wulff/jenkins-template-selenium.git',
     branch => 'develop',
-    # TODO make sure /var/lib/jenkins/jobs existing. These two does not ensure that.
-    # require => Package['jenkins'],
-    # require => Service['jenkins'],
+    require => File['/var/lib/jenkins/jobs'],
   }
 }
 
