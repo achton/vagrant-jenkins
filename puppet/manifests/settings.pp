@@ -26,4 +26,3 @@ GxbKsQKBgEFV5M+jZ98l+vr8Ebj5QjMn3GrG6dDSyKm9acschSPNuxVoZlbzeuDQ
 ghNeKBYI3FeK90sZPAXB+PhUXu4pG/YG852DAUzR090XVB/QS8AdG0CniV7jIeuq
 tmir7huAkm5iDCuK3EQHP21dFke/aYhE3GkJshWN6LLonBbC1L4g
 -----END RSA PRIVATE KEY-----'
-$ssh_known_hosts = ''

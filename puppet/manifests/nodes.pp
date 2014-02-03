@@ -226,10 +226,19 @@ node "jenkins-slave" inherits "basenode" {
     require => User['jenkins'],
   }
 
-  file { '/home/jenkins/.ssh/known_hosts':
-    content => $ssh_known_hosts,
-    owner => 'jenkins',
-    group => 'jenkins',
+  file { '/home/jenkins/.ssh/config':
+    content => "UserKnownHostsFile=/dev/null\nStrictHostKeyChecking=no",
+    owner => jenkins,
+    group => nobody,
+    mode => 0644,
+    require => File['/home/jenkins/.ssh'],
+  }
+
+  file { '/home/jenkins/.ssh':
+    ensure => directory,
+    owner => jenkins,
+    group => nobody,
+    mode => 0700,
     require => User['jenkins'],
   }
 
@@ -242,7 +251,7 @@ node "jenkins-slave" inherits "basenode" {
   }
 
   file { '/home/jenkins/.ssh/id_rsa.pub':
-    content => $ssh_public_key,
+    content => "ssh-rsa ${ssh_public_key}",
     owner => jenkins,
     group => nobody,
     mode => 0644,
@@ -278,22 +287,24 @@ node "master.local" inherits "jenkins-master" {
 
   file { '/var/lib/jenkins/jobs':
     ensure => directory,
+    owner => jenkins,
+    group => jenkins,
   }
 
-  jenkinsci::job { 'template-drupal-simpletest':
-    repository => 'git://github.com/wulff/jenkins-drupal-template.git',
-    require => File['/var/lib/jenkins/jobs'],
-  }
+  #jenkinsci::job { 'template-drupal-simpletest':
+  #  repository => 'git://github.com/wulff/jenkins-drupal-template.git',
+  #  require => File['/var/lib/jenkins/jobs'],
+  #}
   jenkinsci::job { 'template-drupal-static-analysis':
     repository => 'git://github.com/troelsselch/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
     require => File['/var/lib/jenkins/jobs'],
   }
-  jenkinsci::job { 'template-selenium':
-    repository => 'git://github.com/wulff/jenkins-template-selenium.git',
-    branch => 'develop',
-    require => File['/var/lib/jenkins/jobs'],
-  }
+  #jenkinsci::job { 'template-selenium':
+  #  repository => 'git://github.com/wulff/jenkins-template-selenium.git',
+  #  branch => 'develop',
+  #  require => File['/var/lib/jenkins/jobs'],
+  #}
 }
 
 node "phpqa.local" inherits "jenkins-slave" {
@@ -334,6 +345,11 @@ node "phpqa.local" inherits "jenkins-slave" {
   # centos doesn't come with php-xml support - used to write cpd report
   package { 'php-xml': }
 
+  exec { 'resolv-update':
+    command => 'echo "options single-request-reopen" >> /etc/resolv.conf',
+    before => Class['php::pear'],
+  }
+
   # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
   # TODO: TSS: Takes very long. 10 * 5-10 minutes.
   class { 'php::pear': } -> class { 'php::qatools': }
@@ -344,25 +360,23 @@ node "phpqa.local" inherits "jenkins-slave" {
     manage_repo  => true
   }
 
-  # Disable ssl check, since nodejs version is old.
-  exec { 'no-strict-ssl':
-    command => 'npm config set strict-ssl false'
+  # Add symlink. Nodejs is installed as "$ nodejs", but csslint and jshint uses "$ node"
+  file { '/usr/bin/node':
+    ensure => 'link',
+    target => '/usr/bin/nodejs',
+    require => Class['nodejs'],
   }
 
-  package { 'jshint':
-    provider => 'npm',
-    require => [
-      Class['nodejs'],
-      Exec['no-strict-ssl']
-    ]
+  exec { 'install-jshint':
+    command => '/usr/bin/npm install --global jshint', # global flag = install in global scope
+    onlyif => '/usr/bin/npm config set strict-ssl false',
+    require => File['/usr/bin/node'],
   }
 
-  package { 'csslint':
-    provider => 'npm',
-    require => [
-      Class['nodejs'],
-      Exec['no-strict-ssl']
-    ]
+  exec { 'install-csslint':
+    command => '/usr/bin/npm install --global csslint',
+    onlyif => '/usr/bin/npm config set strict-ssl false',
+    require => File['/usr/bin/node'],
   }
 
   # Add symlink. Nodejs is installed as "$ nodejs", but csslint and jshint uses "$ node"
