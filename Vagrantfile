@@ -1,11 +1,11 @@
 Vagrant::configure('2') do |config|
-  # the base box this environment is built off of
+  # The base box this environment is built off of
   config.vm.box = 'centos-64-x64-vbox4210'
 
-  # the url from where to fetch the base box if it doesn't exist
+  # The url from where to fetch the base box if it doesn't exist
   config.vm.box_url = 'http://puppet-vagrant-boxes.puppetlabs.com/centos-64-x64-vbox4210.box'
 
-  # use puppet to provision packages
+  # Use puppet to provision packages
   config.vm.provision :puppet do |puppet|
     puppet.manifests_path = 'puppet/manifests'
     puppet.manifest_file = 'site.pp'
@@ -13,9 +13,9 @@ Vagrant::configure('2') do |config|
     puppet.options = '--verbose --debug'
   end
 
-  # setup master node
+  # Setup master node
   config.vm.define :master, {:primary => true} do |master|
-    # configure network
+    # Configure network
     master.vm.hostname = 'master.local'
     master.vm.network :private_network, ip: '33.33.33.100'
 
@@ -25,9 +25,9 @@ Vagrant::configure('2') do |config|
     end
   end
 
-  # setup static phpqa node
+  # Setup static phpqa node
   config.vm.define :phpqa do |phpqa|
-    # configure network
+    # cCnfigure network
     phpqa.vm.hostname = 'phpqa.local'
     phpqa.vm.network :private_network, ip: '33.33.33.111'
 
@@ -37,9 +37,9 @@ Vagrant::configure('2') do |config|
     end
   end
 
-  # setup drupal simpletest node
+  # Setup drupal simpletest node
   config.vm.define :simpletest do |simpletest|
-    # configure network
+    # Configure network
     simpletest.vm.hostname = 'simpletest.local'
     simpletest.vm.network :private_network, ip: '33.33.33.112'
 
@@ -49,7 +49,7 @@ Vagrant::configure('2') do |config|
     end
   end
 
-  # setup selenium node
+  # Setup selenium node
   config.vm.define :selenium do |selenium|
     # configure network
     selenium.vm.hostname = 'selenium.local'

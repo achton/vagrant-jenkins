@@ -1,3 +1,6 @@
 .DS_Store
 .vagrant
 notes.txt
+vagrant-jenkins.sublime-project
+vagrant-jenkins.sublime-workspace
+
