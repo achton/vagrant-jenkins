@@ -117,6 +117,8 @@ node "jenkins-master" inherits "basenode" {
   jenkinsci::plugin { 'view-job-filters': }
   jenkinsci::plugin { 'warnings': }
   jenkinsci::plugin { 'xvfb': }
+  jenkinsci::plugin { 'doxygen': }
+  jenkinsci::plugin { 'role-strategy': }
 #  jenkinsci::plugin { 'selenium': } # TODO: use this when it becomes stable
 
   # Configure Jenkins master to know the slaves
@@ -396,12 +398,6 @@ node "phpqa.local" inherits "jenkins-slave" {
     # Set strict-ssl false since it's an old nodejs.
     onlyif => '/usr/bin/npm config set strict-ssl false',
     require => File['/usr/bin/node'],
-  }
-
-  # Add symlink. Nodejs is installed as "$ nodejs", but csslint+jshint uses "$ node"
-  file { '/usr/bin/node':
-    ensure => 'link',
-    target => '/usr/bin/nodejs',
   }
 
   # Backup phpqatools version of PHPLocTask.php (it doesn't work).
