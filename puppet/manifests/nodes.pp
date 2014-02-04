@@ -362,6 +362,9 @@ node "phpqa.local" inherits "jenkins-slave" {
   # Install XML support - used to write CPD report
   package { 'php-xml': }
 
+  # Install Doxygen.
+  package { 'doxygen': }
+
   # Update DNS settings - avoid 10min calls for PEAR updates.
   exec { 'resolv-update':
     command => 'echo "options single-request-reopen" >> /etc/resolv.conf',
