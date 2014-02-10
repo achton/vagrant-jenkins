@@ -17,10 +17,10 @@ Vagrant::configure('2') do |config|
   config.vm.define :master, {:primary => true} do |master|
     # configure network
     master.vm.hostname = 'master.local'
-    master.vm.network :private_network, ip: '33.33.33.100'
+    master.vm.network :private_network, ip: '33.33.33.200'
 
     config.vm.provider 'virtualbox' do |v|
-      v.name = 'Vagrant Jenkins - Master'
+      v.name = 'Vagrant Jenkins Ubuntu - Master'
       v.customize ['modifyvm', :id, '--memory', 512]
     end
   end
@@ -29,10 +29,10 @@ Vagrant::configure('2') do |config|
   config.vm.define :phpqa do |phpqa|
     # configure network
     phpqa.vm.hostname = 'phpqa.local'
-    phpqa.vm.network :private_network, ip: '33.33.33.111'
+    phpqa.vm.network :private_network, ip: '33.33.33.211'
 
     config.vm.provider 'virtualbox' do |v|
-      v.name = 'Vagrant Jenkins - PHP QA'
+      v.name = 'Vagrant Jenkins Ubuntu - PHP QA'
       v.customize ['modifyvm', :id, '--memory', 512]
     end
   end
@@ -41,10 +41,10 @@ Vagrant::configure('2') do |config|
   config.vm.define :simpletest do |simpletest|
     # configure network
     simpletest.vm.hostname = 'simpletest.local'
-    simpletest.vm.network :private_network, ip: '33.33.33.112'
+    simpletest.vm.network :private_network, ip: '33.33.33.212'
 
       config.vm.provider 'virtualbox' do |v|
-      v.name = 'Vagrant Jenkins - Drupal Simpletest'
+      v.name = 'Vagrant Jenkins Ubuntu - Drupal Simpletest'
       v.customize ['modifyvm', :id, '--memory', 512]
     end
   end
@@ -53,10 +53,10 @@ Vagrant::configure('2') do |config|
   config.vm.define :selenium do |selenium|
     # configure network
     selenium.vm.hostname = 'selenium.local'
-    selenium.vm.network :private_network, ip: '33.33.33.113'
+    selenium.vm.network :private_network, ip: '33.33.33.213'
 
     config.vm.provider 'virtualbox' do |v|
-      v.name = 'Vagrant Jenkins - Selenium'
+      v.name = 'Vagrant Jenkins Ubuntu - Selenium'
       v.customize ['modifyvm', :id, '--memory', 512]
     end
   end

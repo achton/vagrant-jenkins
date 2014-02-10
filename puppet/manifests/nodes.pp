@@ -97,7 +97,7 @@ node "jenkins-master" inherits "basenode" {
         name => 'phpqa.local',
         description => 'A slave optimized for doing static code analysis of PHP projects.',
         labels => 'phpqa',
-        host => '33.33.33.111',
+        host => '33.33.33.211',
         port => '22',
         path => '/home/jenkins/ci',
         username => 'jenkins',
@@ -108,7 +108,7 @@ node "jenkins-master" inherits "basenode" {
         name => 'simpletest.local',
         description => 'A slave optimized for running Drupal simpletests.',
         labels => 'drupal',
-        host => '33.33.33.112',
+        host => '33.33.33.212',
         port => '22',
         path => '/home/jenkins/ci',
         username => 'jenkins',
@@ -119,7 +119,7 @@ node "jenkins-master" inherits "basenode" {
         name => 'selenium.local',
         description => 'A slave optimized for running Selenium-based tests.',
         labels => 'selenium',
-        host => '33.33.33.113',
+        host => '33.33.33.213',
         port => '22',
         path => '/home/jenkins/ci',
         username => 'jenkins',
@@ -204,7 +204,7 @@ node "jenkins-slave" inherits "basenode" {
 
 }
 
-node "master.local" inherits "jenkins-master" {
+node "master.peytz.loc" inherits "jenkins-master" {
 
   # this is necessary to make it possible to configure jobs using xvfb
 
@@ -250,7 +250,7 @@ node "master.local" inherits "jenkins-master" {
   }
 }
 
-node "phpqa.local" inherits "jenkins-slave" {
+node "phpqa.peytz.loc" inherits "jenkins-slave" {
 
   package { 'unzip':
     ensure => present,
