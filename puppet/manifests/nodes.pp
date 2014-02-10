@@ -272,12 +272,18 @@ node "phpqa.peytz.loc" inherits "jenkins-slave" {
   # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
   class { 'php::pear': } -> class { 'php::qatools': }
 
+  # Set npm registry to http, since https fails.
+  exec { 'set-npm-registry':
+    command => 'npm config set registry http://registry.npmjs.org/',
+    require => Package['npm']
+  }
+
   # install jshint
 
   exec { 'npm-install-jshint':
     command => 'npm install -g jshint',
     creates => '/usr/local/bin/jshint',
-    require => Package['npm'],
+    require => Exec['set-npm-registry'],
   }
 
   exec { 'npm-update-jshint':
@@ -290,7 +296,7 @@ node "phpqa.peytz.loc" inherits "jenkins-slave" {
   exec { 'npm-install-csslint':
     command => 'npm install -g csslint',
     creates => '/usr/local/bin/csslint',
-    require => Package['npm'],
+    require => Exec['set-npm-registry'],
   }
 
   exec { 'npm-update-csslint':
