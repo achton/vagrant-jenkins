@@ -3,8 +3,13 @@
 node "basenode" {
   # Update system packages
   exec { 'update-all-packages':
-    command => '/usr/bin/yum update --skip-broken -y'
+    command => '/usr/bin/yum update --skip-broken -y --exclude=kernel\*'
   }
+
+  # Log outgoing calls.
+  #exec { 'log-outgoing-traffic':
+  #  command => 'iptables -I OUTPUT 1 -p tcp -j LOG',
+  #}
 
   # Disable iptables to allow incomming trafic
   # TODO IMPORTANT: remove before setting if for real as this is a security risk
@@ -60,7 +65,9 @@ node "jenkins-master" inherits "basenode" {
   }
 
   # Install jenkins and all required plugins
-  class { 'jenkinsci': }
+  class { 'jenkinsci':
+    version => 1.549
+  }
 
   # Dependencies for plugins are listed on the plugins page on wiki.jenkinsci.org
   jenkinsci::plugin { 'analysis-collector': }
@@ -389,7 +396,7 @@ node "phpqa.local" inherits "jenkins-slave" {
 
   # Install JSHint
   exec { 'install-jshint':
-    command => '/usr/bin/npm install --global jshint', # global flag = install in global scope
+    command => '/usr/bin/npm install --global jshint@2.4.3', # global flag = install in global scope
     # Set strict-ssl false since it's an old nodejs.
     onlyif => '/usr/bin/npm config set strict-ssl false',
     require => File['/usr/bin/node'],
@@ -401,20 +408,6 @@ node "phpqa.local" inherits "jenkins-slave" {
     # Set strict-ssl false since it's an old nodejs.
     onlyif => '/usr/bin/npm config set strict-ssl false',
     require => File['/usr/bin/node'],
-  }
-
-  # Backup phpqatools version of PHPLocTask.php (it doesn't work).
-  exec { 'backup-phploctask':
-    command => 'mv PHPLocTask.php PHPLocTask.php.bak',
-    cwd     => '/usr/share/pear/phing/tasks/ext/phploc',
-    require => Package['phpqatools'],
-  }
-
-  # Install working PHPLOC.
-  exec { 'download-phploctask':
-    command => 'wget https://raw.github.com/phingofficial/phing/master/classes/phing/tasks/ext/phploc/PHPLocTask.php',
-    cwd     => '/usr/share/pear/phing/tasks/ext/phploc',
-    require => Exec['backup-phploctask'],
   }
 
   # Download Drupal codesniffer rules.

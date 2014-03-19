@@ -8,6 +8,7 @@ SECURITY WARNING!
 
 This setup uses CentOS os with iptables (i.e. firewall) disabled!
 
+http://33.33.33.100:8080/
 
 Installation
 ------------
